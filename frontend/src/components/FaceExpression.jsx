@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as faceapi from 'face-api.js';
+import axios from 'axios';
 
-const FaceExpression = () => {
+const FaceExpression = ({ setSongs }) => {
   const videoRef = useRef(null);
   const [expression, setExpression] = useState('');
   const [emoji, setEmoji] = useState('😐');
@@ -17,16 +18,14 @@ const FaceExpression = () => {
     neutral: '😐',
   };
 
-  // Load models once on mount
   useEffect(() => {
     const loadModels = async () => {
-      const MODEL_URL = '/models'; // public/models
+      const MODEL_URL = '/models';
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
       ]);
     };
-
     loadModels().then(startVideo);
   }, []);
 
@@ -56,15 +55,31 @@ const FaceExpression = () => {
         setEmoji(emojiMap[topExpression] || '❓');
         setTopMood(topExpression);
         console.log('Detected Mood:', topExpression);
+
+        // Fetch songs for detected mood
+        axios
+          .get(`http://localhost:3000/api/songs?mood=${topExpression}`)
+          .then((response) => {
+            if (response.data && response.data.songs) {
+              setSongs(response.data.songs);
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching songs:', error);
+          });
       } else {
         setExpression('Unclear');
         setEmoji('❓');
+        setTopMood('');
         console.log('Mood unclear');
+        setSongs([]); // Optionally clear songs
       }
     } else {
       setExpression('No face');
       setEmoji('❓');
+      setTopMood('');
       console.log('No face detected');
+      setSongs([]); // Optionally clear songs
     }
   };
 
@@ -75,10 +90,8 @@ const FaceExpression = () => {
           ref={videoRef}
           autoPlay
           muted
-         
           className="rounded-lg w-[30rem] object-cover "
         />
-        {/* Canvas removed for cleaner view */}
       </div>
       <div className="mt-4 text-2xl font-semibold">
         {emoji} Current Expression: {expression || 'Click Detect'}

@@ -6,21 +6,22 @@ const router = express.Router();
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post('/songs', upload.single("audio") , async (req, res) => {
-   
-    const fileData = await uploadfile(req.file);
-
-    const song = await songModel({
-        title: req.body.title,
-        artist: req.body.artist,
-        audio:fileData.url,
-        mood:req.body.mood
-    })
-    res.status(201).json({
-        message: 'Song added successfully',
-        song: song
-    });
-
+router.post('/songs', upload.single("audio"), async (req, res) => {
+    try {
+        const fileData = await uploadfile(req.file);
+        const song = await songModel.create({
+            title: req.body.title,
+            artist: req.body.artist,
+            audio: fileData.url,
+            mood: req.body.mood
+        });
+        res.status(201).json({
+            message: 'Song added successfully',
+            song: song
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error adding song', error });
+    }
 }) 
 
 router.get('/songs', async(req,res)=>{
