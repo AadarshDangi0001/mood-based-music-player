@@ -1,4 +1,5 @@
 import ImageKit from "imagekit";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config()
 
@@ -13,8 +14,8 @@ function uploadfile(file){
         imagekit.upload(
         {
             file: file.buffer,
-            fileName: file.originalname
-          
+            fileName: new mongoose.Types.ObjectId().toString(),
+            folder: "mood-player-songs"
         },
         (error, result) => {
             if (error) {
